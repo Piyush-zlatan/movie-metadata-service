@@ -1,0 +1,21 @@
+{
+  "name": "movie-metadata-service",
+  "version": "1.0.0",
+  "description": "A simple Movie api",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://bitbucket.org/babydestination/movie-metadata-service.git"
+  },
+  "author": "Piyush Agarwal",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/babydestination/movie-metadata-service#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "https": "^1.0.0"
+  }
+}
