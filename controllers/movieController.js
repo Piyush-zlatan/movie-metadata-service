@@ -2,12 +2,13 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
+
 let merge = [];
 module.exports.getMovie = async function (req, res) {
 
 
   const id = req.params.id;
-  let fileData = await getFile(id);
+  let fileData = await getFile();
 
   let serverArray = [];
   for (let i = 0; i < fileData.length; i++) {
@@ -16,57 +17,72 @@ module.exports.getMovie = async function (req, res) {
       serverArray.push(res);
     })
   }
- // console.log('1', serverArray);
 
-   merge = await mergeBothObjects(fileData,serverArray);
+  merge = await mergeBothObjects(fileData, serverArray);
   return res.json(200, {
-    message: 'aagya',
+    message: 'Done',
     data: merge
   })
 }
 
-module.exports.searchMovie = async function(req,res){
-  try{
+module.exports.searchMovie = async function (req, res) {
+  try {
+    if (merge.length == 0) {
+      let localobj = await getFile();
 
-    console.log(req.query);
+      let serverArray = [];
+      for (let i = 0; i < fileData.length; i++) {
+        const imdbId = fileData[i].imdbId;
+        await getFromAPI(imdbId).then(res => {
+          serverArray.push(res);
+        })
+      }
+      merge = mergeBothObjects(localobj,serverArray);  
+    }
+      let requiredMovies = searchByQuery(req.query);
 
-  }catch(err){
-    return res.json(500,{
-      message:'server error'
+      return res.json(200,{
+        message: 'found',
+        data:requiredMovies
+      });
+
+  } catch (err) {
+    return res.json(500, {
+      message: 'server error'
     })
   }
 }
 
-let mergeBothObjects = async function(localFile, serverFile){
-    try{
-      let newArrray = [];
-      localFile.forEach(file=>{
-        serverFile.forEach(element=>{
-          if(file.imdbId == element.imdbID){
-           // file.title = element.Title;
-           let directorArray = element.Director.split(',');
-           element.Director = directorArray;
-           let writerArray = element.Writer.split(',');
-           element.Writer = writerArray;
-           let actorArray = element.Actors.split(',');
-           element.Actors = actorArray;
+// Merging two json objects
+let mergeBothObjects = async function (localFile, serverFile) {
+  try {
+    localFile.forEach(file => {
+      serverFile.forEach(element => {
+        if (file.imdbId == element.imdbID) {
+          // file.title = element.Title;
+          let directorArray = element.Director.split(',');
+          element.Director = directorArray;
+          let writerArray = element.Writer.split(',');
+          element.Writer = writerArray;
+          let actorArray = element.Actors.split(',');
+          element.Actors = actorArray;
           //  element.Ratings = Object.assign(element.Ratings,file.userrating);
-             file = Object.assign(file,element,{title:element.Title},
-                                {description:element.Plot},{RunTime:file.duration})
-              delete file.Title;
-              delete file.Plot;
-              delete file.duration;
-            }
-        })
+          file = Object.assign(file, element, { title: element.Title },
+            { description: element.Plot }, { RunTime: file.duration })
+          delete file.Title;
+          delete file.Plot;
+          delete file.duration;
+        }
       })
+    })
 
-      return localFile;
-    }catch(err){
-      console.log('error',err);
-    }
+    return localFile;
+  } catch (err) {
+    console.log('error', err);
+  }
 
 }
-
+// Reading from server
 let getFromAPI = function (id) {
   return new Promise((resolve, reject) => {
     https.get(`https://www.omdbapi.com/?i=${id}&apikey=68fd98ab&plot=full`, (res) => {
@@ -112,7 +128,7 @@ let getFromAPI = function (id) {
   })
 }
 
-
+// Reading from local files
 let getFile = async function () {
   //  let localId = id + '.json';
   try {
@@ -121,9 +137,9 @@ let getFile = async function () {
     let moviesPath = path.join(__dirname, '../movies');
     let fileNames = await fs.readdirSync(moviesPath);
     fileNames.forEach((element) => {
-      let singleMovieFilePath = path.join(moviesPath, '/', element);
-      let rawData = fs.readFileSync(singleMovieFilePath);
-      let data = JSON.parse(rawData);
+      let singleMoviePath = path.join(moviesPath, '/', element);
+      let raw = fs.readFileSync(singleMoviePath);
+      let data = JSON.parse(raw);
       finalJSONLocal.push(data);
     })
 
